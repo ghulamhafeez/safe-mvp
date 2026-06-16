@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-export default function Home() {
+function HomeContent() {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const searchParams = useSearchParams();
+  const status = searchParams.get('status');
 
-  const handlePayment = async (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -18,7 +21,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: amount,
-          chopperAccountId: 'acc_chopper_123' 
+          chopperAccountId: 'acc_chopper_123'
         }),
       });
 
@@ -48,7 +51,13 @@ export default function Home() {
         <p className="text-sm text-center text-gray-500 mb-6">
           Payment goes directly to Chopper's Safepay account
         </p>
-        
+
+        {status === 'cancelled' && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+            ⚠️ Payment was cancelled. You can try again below.
+          </div>
+        )}
+
         <form onSubmit={handlePayment} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Amount (PKR)</label>
@@ -74,11 +83,23 @@ export default function Home() {
             {loading ? 'Processing...' : 'Pay with Safepay'}
           </button>
         </form>
-        
+
         <div className="mt-6 pt-4 border-t text-xs text-gray-400 text-center">
           🔐 Sandbox | Test card: 4111 1111 1111 1111 (any expiry/CVV)
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
